@@ -14,6 +14,8 @@ def create_app():
     # Enable CORS for cross-origin requests
     CORS(app)
 
+    app.url_map.strict_slashes = False
+
     # Register the API blueprint with the prefix /api
     app.register_blueprint(api_bp, url_prefix='/api')
 

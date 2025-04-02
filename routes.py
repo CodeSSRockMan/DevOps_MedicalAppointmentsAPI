@@ -3,7 +3,7 @@ from models import db, Schedule
 from utils import get_message, validate_hour
 from datetime import datetime
 
-bp = Blueprint('api', __name__, url_prefix='/api', strict_slashes=False)
+bp = Blueprint('api', __name__)
 
 def get_lang():
     # Get the language from the Accept-Language header; default is Spanish ('es')
