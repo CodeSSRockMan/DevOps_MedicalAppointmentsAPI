@@ -111,7 +111,6 @@ def cancel_reservation(schedule_id):
     db.session.commit()
     return jsonify(schedule.to_dict()), 200
 
-
 def format_error_response(error_key, lang):
     """
     Returns a standardized JSON response for errors.
