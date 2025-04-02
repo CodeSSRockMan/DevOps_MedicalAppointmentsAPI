@@ -35,4 +35,3 @@ def validate_hour(hour_str, lang='es'):
     if not (time(9, 0) <= hour_time <= time(19, 0)):
         return False, None, 'hour_out_of_range'
     return True, hour_time, None
-
