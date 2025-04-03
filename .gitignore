@@ -64,5 +64,14 @@ dist/
 build/
 *.egg-info/
 
+<<<<<<< HEAD
 #Ansible hardcoded
 ansible_env.yml
+=======
+
+# Terraform files
+terraform.tfvars
+*.tfstate
+*.tfstate.backup
+.terraform/
+>>>>>>> cfa45c88e58145b138911f66a078f8c90e296758
