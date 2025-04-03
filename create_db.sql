@@ -1,10 +1,10 @@
 -- File: create_db.sql
 
 -- Create DB if there is none
-CREATE DATABASE IF NOT EXISTS xdemodb;
+CREATE DATABASE IF NOT EXISTS db-softserve-project;
 
 -- Select db
-USE xdemodb;
+USE db-softserve-project;
 
 -- Create table in selected db
 CREATE TABLE IF NOT EXISTS Schedule (

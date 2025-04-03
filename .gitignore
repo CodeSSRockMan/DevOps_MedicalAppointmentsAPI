@@ -63,3 +63,6 @@ yarn-error.log
 dist/
 build/
 *.egg-info/
+
+#Ansible hardcoded
+ansible_env.yml

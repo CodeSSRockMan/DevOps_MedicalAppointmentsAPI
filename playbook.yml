@@ -1,16 +1,17 @@
----
 - name: Set up and deploy the application
   hosts: all
   become: yes
+  vars_files:
+    - ansible_env.yml
   tasks:
-
     - name: Install system dependencies
       apt:
-        name: 
+        name:
           - python3
           - python3-venv
           - python3-pip
           - git
+          - mysql-client
         state: present
         update_cache: yes
 
@@ -37,6 +38,12 @@
       shell: |
         source /opt/app/.venv/bin/activate
         pip install --upgrade flask werkzeug
+      args:
+        executable: /bin/bash
+
+    - name: Run SQL script to set up database schema
+      shell: >
+        mysql -h "{{ ansible_env.rds_host }}" -u "{{ ansible_env.rds_user }}" -p"{{ ansible_env.rds_password }}" "{{ ansible_env.db_name }}" < /opt/app/db_setup.sql
       args:
         executable: /bin/bash
 
