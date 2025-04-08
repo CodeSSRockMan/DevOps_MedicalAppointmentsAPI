@@ -1,23 +1,29 @@
 pipeline {
-    agent none
+    agent any  // Usa el mismo contenedor Jenkins que ya tiene Terraform instalado
 
     stages {
+
         stage('Checkout') {
-            agent any
             steps {
                 checkout scm
             }
         }
 
-        stage('Terraform Init & Plan') {
-            agent {
-                dockerContainer {
-                    image 'hashicorp/terraform:1.6.6'
-                }
-            }
+        stage('Terraform Init') {
+           
             steps {
                 dir('terraform') {
                     sh 'terraform init'
+                }
+            }
+        }
+
+        stage('Terraform Plan') {
+            when {
+                branch 'test-infra'
+            }
+            steps {
+                dir('terraform') {
                     sh 'terraform plan -out=tfplan'
                 }
             }
@@ -26,11 +32,6 @@ pipeline {
         stage('Terraform Apply') {
             when {
                 branch 'test-infra'
-            }
-            agent {
-                dockerContainer {
-                    image 'hashicorp/terraform:1.6.6'
-                }
             }
             steps {
                 dir('terraform') {
@@ -46,5 +47,3 @@ pipeline {
         }
     }
 }
-// This Jenkinsfile is used to manage the infrastructure for the Medical Appointments API project using Terraform.
-// It includes stages for checking out the code, initializing Terraform, planning the infrastructure changes, and applying them.
