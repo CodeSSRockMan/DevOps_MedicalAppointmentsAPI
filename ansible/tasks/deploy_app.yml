@@ -1,0 +1,114 @@
+# Step 1: Log current DATABASE_URL
+- name: Log - DATABASE_URL already available from fetch_env.yml
+  debug:
+    msg: "DATABASE_URL: {{ DATABASE_URL }}"
+
+# Step 2: Preparar entorno para clonar el repositorio
+- name: Log - Cloning the Flask app repository
+  debug:
+    msg: "Cloning the application repository into {{ app_dir }}..."
+
+- name: Check if {{ app_dir }}/.git exists
+  stat:
+    path: "{{ app_dir }}/.git"
+  register: git_dir
+
+- name: Remove app directory if not a Git repo
+  file:
+    path: "{{ app_dir }}"
+    state: absent
+  when: not git_dir.stat.exists
+  become: true
+
+- name: Clone or update the repository
+  git:
+    repo: "{{ app_repo }}"
+    dest: "{{ app_dir }}"
+    version: rollback-a380589
+    force: yes
+    update: yes
+  become: true
+
+# Step 3: Ensure app directory exists (por si acaso)
+- name: Ensure app directory exists
+  file:
+    path: "{{ app_dir }}"
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+  become: true
+
+# Step 4: Create .env file for Flask app
+- name: Create .env file for Flask app
+  copy:
+    dest: "{{ env_file_path }}"
+    content: |
+      DATABASE_URL={{ DATABASE_URL }}
+      DEBUG=True
+    owner: ubuntu
+    group: ubuntu
+    mode: '0644'
+  become: true
+
+# Step 5: Stop and remove any previous Docker container
+- name: Log - Stopping and removing old Docker container
+  debug:
+    msg: "Stopping and removing any previous Docker container..."
+
+- name: Stop and remove previous Docker container
+  docker_container:
+    name: "{{ docker_container_name }}"
+    state: absent
+    force_kill: true
+
+# Step 6: Copy SQL schema to the EC2
+- name: Log - Copying SQL schema file to EC2
+  debug:
+    msg: "Copying create_db.sql to {{ app_dir }}/create_db.sql..."
+
+- name: Copy SQL schema to EC2
+  copy:
+    src: files/create_db.sql
+    dest: "{{ app_dir }}/create_db.sql"
+    mode: '0644'
+  become: true
+
+# Step 7: Execute SQL to create DB and table in RDS
+- name: Log - Executing SQL script to create database and tables
+  debug:
+    msg: "Creating DB and table using create_db.sql in {{ app_dir }}..."
+
+- name: Create DB and tables in RDS
+  shell: >
+    mysql -h "{{ rds_host }}" -u "{{ rds_user }}" -p"{{ rds_password }}" < {{ app_dir }}/create_db.sql
+  args:
+    executable: /bin/bash
+
+# Step 8: Build the Docker image for Flask app
+- name: Log - Building Docker image for the Flask app
+  debug:
+    msg: "Building Docker image from {{ app_dir }}..."
+
+- name: Build Docker image
+  docker_image:
+    name: "{{ docker_image_name }}"
+    source: build
+    build:
+      path: "{{ app_dir }}"
+      nocache: yes
+
+# Step 9: Start the Docker container
+- name: Log - Starting Docker container with Flask app
+  debug:
+    msg: "Running Docker container on port 80 mapped to 5000 inside..."
+
+- name: Run Docker container
+  docker_container:
+    name: "{{ docker_container_name }}"
+    image: "{{ docker_image_name }}"
+    state: started
+    restart_policy: always
+    ports:
+      - "80:5000"
+    env_file: "{{ env_file_path }}"
